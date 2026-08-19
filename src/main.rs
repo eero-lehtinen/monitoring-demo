@@ -1,5 +1,7 @@
 mod telemetry;
 
+use std::error::Error;
+use std::fmt;
 use std::sync::LazyLock;
 use std::time::Duration;
 
@@ -57,28 +59,46 @@ async fn hello() -> &'static str {
 #[derive(Deserialize)]
 struct SlowParams {
     ms: Option<u64>,
+    #[serde(default)]
+    fail: bool,
 }
 
 /// Sleeps for a random or given time, so the latency histogram has a spread
 /// instead of a single spike.
-async fn slow(Query(params): Query<SlowParams>) -> String {
+async fn slow(Query(params): Query<SlowParams>) -> Response {
     let ms = params
         .ms
         .unwrap_or_else(|| rand::rng().random_range(10..1500));
-    work(ms).await;
-    tracing::info!(ms, "slow response");
-    format!("slept {ms}ms\n")
+    match work(ms, params.fail).await {
+        Ok(()) => {
+            tracing::info!(ms, "slow response");
+            format!("slept {ms}ms\n").into_response()
+        }
+        Err(error) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{error}\n")).into_response(),
+    }
 }
+
+#[derive(Debug)]
+struct WorkError;
+
+impl fmt::Display for WorkError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("simulated work execution failure")
+    }
+}
+
+impl Error for WorkError {}
 
 /// A nested set of spans that makes the trace waterfall useful to inspect.
 #[tracing::instrument]
-async fn work(ms: u64) {
+async fn work(ms: u64, fail: bool) -> Result<(), WorkError> {
     let edge_ms = ms / 5;
     let execute_ms = ms - edge_ms * 2;
 
     prepare_work(edge_ms).await;
-    execute_work(execute_ms).await;
+    execute_work(execute_ms, fail).await?;
     finalize_work(edge_ms).await;
+    Ok(())
 }
 
 #[tracing::instrument(name = "work.prepare")]
@@ -86,24 +106,19 @@ async fn prepare_work(ms: u64) {
     tokio::time::sleep(Duration::from_millis(ms)).await;
 }
 
-#[tracing::instrument(name = "work.execute")]
-async fn execute_work(ms: u64) {
+#[tracing::instrument(name = "work.execute", err)]
+async fn execute_work(ms: u64, fail: bool) -> Result<(), WorkError> {
     tokio::time::sleep(Duration::from_millis(ms)).await;
+    if fail {
+        return Err(WorkError);
+    }
+    Ok(())
 }
 
 #[tracing::instrument(name = "work.finalize")]
 async fn finalize_work(ms: u64) {
     tokio::time::sleep(Duration::from_millis(ms)).await;
 }
-
-/// A metric defined by the application rather than the HTTP middleware. Built
-/// once: creating an instrument per request would allocate on every call.
-static FLAKY_FAILURES: LazyLock<Counter<u64>> = LazyLock::new(|| {
-    global::meter("monitoring-demo")
-        .u64_counter("demo.flaky.failures")
-        .with_description("Requests to /flaky that were failed on purpose.")
-        .build()
-});
 
 #[derive(Deserialize)]
 struct FlakyParams {
@@ -121,3 +136,10 @@ async fn flaky(Query(params): Query<FlakyParams>) -> Response {
     }
     "ok\n".into_response()
 }
+
+static FLAKY_FAILURES: LazyLock<Counter<u64>> = LazyLock::new(|| {
+    global::meter("monitoring-demo")
+        .u64_counter("demo.flaky.failures")
+        .with_description("Requests to /flaky that were failed on purpose.")
+        .build()
+});

@@ -249,7 +249,7 @@
 		},
 		{
 			"datasource": { "type": "prometheus", "uid": "prometheus" },
-			"description": "Current value of the application counter incremented by intentional /flaky failures.",
+			"description": "Requests that returned a 5xx status during the selected dashboard time range.",
 			"fieldConfig": {
 				"defaults": {
 					"color": { "mode": "thresholds" },
@@ -283,14 +283,14 @@
 			"targets": [
 				{
 					"editorMode": "code",
-					"expr": "sum(demo_flaky_failures_total{job=\"monitoring-demo\"})",
-					"instant": false,
+					"expr": "sum(increase(http_server_request_duration_seconds_count{job=\"monitoring-demo\",http_response_status_code=~\"5..\"}[$__range]))",
+					"instant": true,
 					"legendFormat": "failures",
-					"range": true,
+					"range": false,
 					"refId": "A"
 				}
 			],
-			"title": "Intentional failures",
+			"title": "Failed requests in range",
 			"type": "stat"
 		},
 		{
@@ -557,7 +557,7 @@
 		},
 		{
 			"datasource": { "type": "prometheus", "uid": "prometheus" },
-			"description": "Application-defined failure counter and its rate of change.",
+			"description": "Cumulative application-defined counter for intentional /flaky failures.",
 			"fieldConfig": {
 				"defaults": {
 					"color": { "mode": "palette-classic" },
@@ -607,7 +607,7 @@
 				{
 					"editorMode": "code",
 					"expr": "sum(demo_flaky_failures_total{job=\"monitoring-demo\"})",
-					"legendFormat": "total failures",
+					"legendFormat": "flaky endpoint",
 					"range": true,
 					"refId": "A"
 				}
@@ -878,12 +878,40 @@
 				{
 					"direction": "backward",
 					"editorMode": "code",
-					"expr": "{service_name=\"monitoring-demo\"}",
+					"expr": "{service_name=\"monitoring-demo\"} | line_format \"{{ if .error }}{{ .error }}{{ else }}{{ __line__ }}{{ end }}\"",
 					"queryType": "range",
 					"refId": "A"
 				}
 			],
 			"title": "Application logs",
+			"type": "logs"
+		},
+		{
+			"datasource": { "type": "loki", "uid": "loki" },
+			"description": "Automatic error reports from instrumented Rust Results. Expand a row to inspect its trace ID and error fields.",
+			"gridPos": { "h": 4, "w": 8, "x": 0, "y": 48 },
+			"id": 23,
+			"options": {
+				"dedupStrategy": "none",
+				"enableInfiniteScrolling": false,
+				"enableLogDetails": true,
+				"prettifyLogMessage": false,
+				"showCommonLabels": false,
+				"showLabels": false,
+				"showTime": true,
+				"sortOrder": "Descending",
+				"wrapLogMessage": true
+			},
+			"targets": [
+				{
+					"direction": "backward",
+					"editorMode": "code",
+					"expr": "{service_name=\"monitoring-demo\"} | severity_text = \"ERROR\" | line_format \"{{ if .error }}{{ .error }}{{ else }}{{ __line__ }}{{ end }}\"",
+					"queryType": "range",
+					"refId": "A"
+				}
+			],
+			"title": "Error logs",
 			"type": "logs"
 		},
 		{
@@ -893,6 +921,66 @@
 			"panels": [],
 			"title": "Traces",
 			"type": "row"
+		},
+		{
+			"datasource": { "type": "tempo", "uid": "tempo" },
+			"description": "Traces containing an error span. Select a trace ID to inspect the failure and its correlated logs.",
+			"fieldConfig": {
+				"defaults": {},
+				"overrides": [
+					{
+						"matcher": { "id": "byName", "options": "traceID" },
+						"properties": [{ "id": "custom.width", "value": 280 }]
+					},
+					{
+						"matcher": { "id": "byName", "options": "traceDuration" },
+						"properties": [{ "id": "unit", "value": "ms" }]
+					}
+				]
+			},
+			"gridPos": { "h": 8, "w": 24, "x": 0, "y": 53 },
+			"id": 31,
+			"options": {
+				"cellHeight": "sm",
+				"footer": {
+					"countRows": false,
+					"fields": "",
+					"reducer": ["sum"],
+					"show": false
+				},
+				"showHeader": true
+			},
+			"targets": [
+				{
+					"limit": 100,
+					"query": "{ resource.service.name = \"monitoring-demo\" && status = error }",
+					"queryType": "traceql",
+					"refId": "A",
+					"tableType": "traces"
+				}
+			],
+			"title": "Failed traces",
+			"transformations": [
+				{
+					"id": "organize",
+					"options": {
+						"excludeByName": { "nested": true, "traceService": true },
+						"indexByName": {
+							"startTime": 0,
+							"traceName": 1,
+							"traceDuration": 2,
+							"traceID": 3
+						},
+						"renameByName": {
+							"startTime": "Start time",
+							"traceDuration": "Duration",
+							"traceID": "Trace ID",
+							"traceName": "Request"
+						}
+					}
+				}
+			],
+			"type": "table"
 		},
 		{
 			"datasource": { "type": "tempo", "uid": "tempo" },
@@ -910,8 +998,8 @@
 					}
 				]
 			},
-			"gridPos": { "h": 12, "w": 24, "x": 0, "y": 53 },
-			"id": 31,
+			"gridPos": { "h": 10, "w": 24, "x": 0, "y": 61 },
+			"id": 32,
 			"options": {
 				"cellHeight": "sm",
 				"footer": {

@@ -8,7 +8,7 @@ It has three endpoints with predictable behavior:
 | Endpoint | Behavior |
 | --- | --- |
 | `GET /hello` | Returns `200` immediately. |
-| `GET /slow?ms=800` | Waits for the requested number of milliseconds. Without `ms`, it waits for a random value between 10 and 1499 ms. |
+| `GET /slow?ms=800` | Waits for the requested number of milliseconds. Without `ms`, it waits for a random value between 10 and 1499 ms. Add `fail=true` to fail during the execute phase. |
 | `GET /flaky?fail_rate=0.8` | Returns `500` at the requested rate. The default rate is `0.3`. |
 
 ## Run it
@@ -32,6 +32,9 @@ curl -i http://localhost:8080/hello
 
 # Wait 500 ms before returning 200.
 curl -i 'http://localhost:8080/slow?ms=500'
+
+# Fail during work.execute, return 500, and report the error.
+curl -i 'http://localhost:8080/slow?ms=500&fail=true'
 
 # Always return 500 and increment the intentional-failure counter.
 curl -i 'http://localhost:8080/flaky?fail_rate=1'
@@ -94,8 +97,10 @@ handler:
    each concrete URL. The duration histogram's count gives the request volume.
 
 The handlers add log events, a `work` span with `work.prepare`, `work.execute`,
-and `work.finalize` child spans, and the `demo.flaky.failures` counter.
-`src/telemetry.rs` connects those signals to OpenTelemetry:
+and `work.finalize` child spans, and application failure counters. A failed
+execution marks `work.execute` as an error, adds an exception event, and emits
+a correlated ERROR log. `src/telemetry.rs` connects those signals to
+OpenTelemetry:
 
 - tracing events go to the terminal and to the OTLP log exporter;
 - spans go to the OTLP trace exporter;
@@ -122,9 +127,9 @@ Compose provisions it automatically. It includes:
 - request totals, active requests, body sizes, and response throughput for
   each endpoint;
 - the `demo.flaky.failures` application counter;
-- application logs grouped by severity, with trace and span IDs in the log
-  details;
-- recent Tempo traces. Select one to inspect its spans.
+- application logs grouped by severity, plus a dedicated error stream with
+  readable messages and trace IDs;
+- failed and recent Tempo traces. Select one to inspect its spans.
 
 OpenTelemetry uses dotted metric names. Prometheus converts them to its naming
 format. For example, `demo.flaky.failures` becomes
