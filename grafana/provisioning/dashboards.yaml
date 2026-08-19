@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: monitoring-demo
+    orgId: 1
+    folder: Demo
+    type: file
+    disableDeletion: true
+    editable: true
+    updateIntervalSeconds: 10
+    options:
+      path: /otel-lgtm/grafana-dashboard-monitoring-demo.json
+      foldersFromFilesStructure: false

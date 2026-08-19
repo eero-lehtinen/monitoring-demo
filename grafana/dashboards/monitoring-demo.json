@@ -1,0 +1,969 @@
+{
+	"annotations": {
+		"list": []
+	},
+	"description": "Metrics, application counters, logs, and traces for the monitoring-demo Rust service.",
+	"editable": true,
+	"fiscalYearStartMonth": 0,
+	"graphTooltip": 1,
+	"id": null,
+	"links": [],
+	"liveNow": false,
+	"panels": [
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Requests completed per second across all endpoints.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "thresholds" },
+					"mappings": [],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "reqps"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 5, "w": 4, "x": 0, "y": 0 },
+			"id": 1,
+			"options": {
+				"colorMode": "value",
+				"graphMode": "area",
+				"justifyMode": "auto",
+				"orientation": "auto",
+				"reduceOptions": {
+					"calcs": ["lastNotNull"],
+					"fields": "",
+					"values": false
+				},
+				"showPercentChange": false,
+				"textMode": "auto",
+				"wideLayout": true
+			},
+			"pluginVersion": "12.0.2",
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum(rate(http_server_request_duration_seconds_count{job=\"monitoring-demo\"}[$__rate_interval]))",
+					"instant": false,
+					"legendFormat": "requests",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Request rate",
+			"type": "stat"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Share of completed requests with a 5xx status.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "thresholds" },
+					"mappings": [],
+					"max": 1,
+					"min": 0,
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{ "color": "green", "value": null },
+							{ "color": "yellow", "value": 0.01 },
+							{ "color": "red", "value": 0.05 }
+						]
+					},
+					"unit": "percentunit"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 5, "w": 4, "x": 4, "y": 0 },
+			"id": 2,
+			"options": {
+				"colorMode": "value",
+				"graphMode": "area",
+				"justifyMode": "auto",
+				"orientation": "auto",
+				"reduceOptions": {
+					"calcs": ["lastNotNull"],
+					"fields": "",
+					"values": false
+				},
+				"showPercentChange": false,
+				"textMode": "auto",
+				"wideLayout": true
+			},
+			"pluginVersion": "12.0.2",
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum(rate(http_server_request_duration_seconds_count{job=\"monitoring-demo\",http_response_status_code=~\"5..\"}[$__rate_interval])) / clamp_min(sum(rate(http_server_request_duration_seconds_count{job=\"monitoring-demo\"}[$__rate_interval])), 1e-9)",
+					"instant": false,
+					"legendFormat": "errors",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Error rate",
+			"type": "stat"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "95th percentile request duration across all endpoints.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "thresholds" },
+					"mappings": [],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{ "color": "green", "value": null },
+							{ "color": "yellow", "value": 0.5 },
+							{ "color": "red", "value": 1 }
+						]
+					},
+					"unit": "s"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 5, "w": 4, "x": 8, "y": 0 },
+			"id": 3,
+			"options": {
+				"colorMode": "value",
+				"graphMode": "area",
+				"justifyMode": "auto",
+				"orientation": "auto",
+				"reduceOptions": {
+					"calcs": ["lastNotNull"],
+					"fields": "",
+					"values": false
+				},
+				"showPercentChange": false,
+				"textMode": "auto",
+				"wideLayout": true
+			},
+			"pluginVersion": "12.0.2",
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{job=\"monitoring-demo\"}[$__rate_interval])))",
+					"instant": false,
+					"legendFormat": "p95",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "P95 latency",
+			"type": "stat"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Requests currently executing in the service.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "thresholds" },
+					"decimals": 0,
+					"mappings": [],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "short"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 5, "w": 4, "x": 12, "y": 0 },
+			"id": 4,
+			"options": {
+				"colorMode": "value",
+				"graphMode": "area",
+				"justifyMode": "auto",
+				"orientation": "auto",
+				"reduceOptions": {
+					"calcs": ["lastNotNull"],
+					"fields": "",
+					"values": false
+				},
+				"showPercentChange": false,
+				"textMode": "auto",
+				"wideLayout": true
+			},
+			"pluginVersion": "12.0.2",
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum(http_server_active_requests{job=\"monitoring-demo\"})",
+					"instant": false,
+					"legendFormat": "active",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Active requests",
+			"type": "stat"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Requests completed during the selected dashboard time range.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "thresholds" },
+					"decimals": 0,
+					"mappings": [],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "blue", "value": null }]
+					},
+					"unit": "short"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 5, "w": 4, "x": 16, "y": 0 },
+			"id": 5,
+			"options": {
+				"colorMode": "value",
+				"graphMode": "none",
+				"justifyMode": "auto",
+				"orientation": "auto",
+				"reduceOptions": {
+					"calcs": ["lastNotNull"],
+					"fields": "",
+					"values": false
+				},
+				"showPercentChange": false,
+				"textMode": "auto",
+				"wideLayout": true
+			},
+			"pluginVersion": "12.0.2",
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum(increase(http_server_request_duration_seconds_count{job=\"monitoring-demo\"}[$__range]))",
+					"instant": true,
+					"legendFormat": "requests",
+					"range": false,
+					"refId": "A"
+				}
+			],
+			"title": "Requests in range",
+			"type": "stat"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Current value of the application counter incremented by intentional /flaky failures.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "thresholds" },
+					"decimals": 0,
+					"mappings": [],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "orange", "value": null }]
+					},
+					"unit": "short"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 5, "w": 4, "x": 20, "y": 0 },
+			"id": 6,
+			"options": {
+				"colorMode": "value",
+				"graphMode": "area",
+				"justifyMode": "auto",
+				"orientation": "auto",
+				"reduceOptions": {
+					"calcs": ["lastNotNull"],
+					"fields": "",
+					"values": false
+				},
+				"showPercentChange": false,
+				"textMode": "auto",
+				"wideLayout": true
+			},
+			"pluginVersion": "12.0.2",
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum(demo_flaky_failures_total{job=\"monitoring-demo\"})",
+					"instant": false,
+					"legendFormat": "failures",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Intentional failures",
+			"type": "stat"
+		},
+		{
+			"collapsed": false,
+			"gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+			"id": 10,
+			"panels": [],
+			"title": "HTTP endpoints",
+			"type": "row"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Completed requests per second, split by route and status code.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "palette-classic" },
+					"custom": {
+						"axisBorderShow": false,
+						"axisCenteredZero": false,
+						"axisColorMode": "text",
+						"axisLabel": "",
+						"axisPlacement": "auto",
+						"barAlignment": 0,
+						"drawStyle": "line",
+						"fillOpacity": 12,
+						"gradientMode": "none",
+						"hideFrom": { "legend": false, "tooltip": false, "viz": false },
+						"insertNulls": false,
+						"lineInterpolation": "linear",
+						"lineWidth": 2,
+						"pointSize": 5,
+						"scaleDistribution": { "type": "linear" },
+						"showPoints": "never",
+						"spanNulls": false,
+						"stacking": { "group": "A", "mode": "none" },
+						"thresholdsStyle": { "mode": "off" }
+					},
+					"mappings": [],
+					"min": 0,
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "reqps"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+			"id": 11,
+			"options": {
+				"legend": {
+					"calcs": ["mean", "max"],
+					"displayMode": "table",
+					"placement": "bottom",
+					"showLegend": true
+				},
+				"tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+			},
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum by (http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{job=\"monitoring-demo\"}[$__rate_interval]))",
+					"legendFormat": "{{http_route}} {{http_response_status_code}}",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Request rate by endpoint",
+			"type": "timeseries"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Median, 95th, and 99th percentile request duration for each route.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "palette-classic" },
+					"custom": {
+						"axisBorderShow": false,
+						"axisCenteredZero": false,
+						"axisColorMode": "text",
+						"axisLabel": "",
+						"axisPlacement": "auto",
+						"barAlignment": 0,
+						"drawStyle": "line",
+						"fillOpacity": 8,
+						"gradientMode": "none",
+						"hideFrom": { "legend": false, "tooltip": false, "viz": false },
+						"insertNulls": false,
+						"lineInterpolation": "linear",
+						"lineWidth": 2,
+						"pointSize": 5,
+						"scaleDistribution": { "type": "linear" },
+						"showPoints": "never",
+						"spanNulls": false,
+						"stacking": { "group": "A", "mode": "none" },
+						"thresholdsStyle": { "mode": "off" }
+					},
+					"mappings": [],
+					"min": 0,
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "s"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+			"id": 12,
+			"options": {
+				"legend": {
+					"calcs": ["lastNotNull"],
+					"displayMode": "table",
+					"placement": "bottom",
+					"showLegend": true
+				},
+				"tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+			},
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "histogram_quantile(0.50, sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket{job=\"monitoring-demo\"}[$__rate_interval])))",
+					"legendFormat": "{{http_route}} p50",
+					"range": true,
+					"refId": "A"
+				},
+				{
+					"editorMode": "code",
+					"expr": "histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket{job=\"monitoring-demo\"}[$__rate_interval])))",
+					"legendFormat": "{{http_route}} p95",
+					"range": true,
+					"refId": "B"
+				},
+				{
+					"editorMode": "code",
+					"expr": "histogram_quantile(0.99, sum by (le, http_route) (rate(http_server_request_duration_seconds_bucket{job=\"monitoring-demo\"}[$__rate_interval])))",
+					"legendFormat": "{{http_route}} p99",
+					"range": true,
+					"refId": "C"
+				}
+			],
+			"title": "Latency by endpoint",
+			"type": "timeseries"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Completed requests during the selected time range, split by route and status code.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "thresholds" },
+					"decimals": 0,
+					"mappings": [],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "short"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 8, "w": 8, "x": 0, "y": 14 },
+			"id": 13,
+			"options": {
+				"cellHeight": "sm",
+				"footer": {
+					"countRows": false,
+					"fields": "",
+					"reducer": ["sum"],
+					"show": false
+				},
+				"showHeader": true
+			},
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum by (http_route, http_response_status_code) (increase(http_server_request_duration_seconds_count{job=\"monitoring-demo\"}[$__range]))",
+					"format": "table",
+					"instant": true,
+					"legendFormat": "__auto",
+					"range": false,
+					"refId": "A"
+				}
+			],
+			"title": "Request totals",
+			"transformations": [
+				{
+					"id": "organize",
+					"options": {
+						"excludeByName": { "Time": true },
+						"indexByName": {
+							"http_route": 0,
+							"http_response_status_code": 1,
+							"Value": 2
+						},
+						"renameByName": {
+							"Value": "Requests",
+							"http_response_status_code": "Status",
+							"http_route": "Endpoint"
+						}
+					}
+				}
+			],
+			"type": "table"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Current active-request metric grouped by HTTP method.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "palette-classic" },
+					"custom": {
+						"axisBorderShow": false,
+						"axisCenteredZero": false,
+						"axisColorMode": "text",
+						"axisLabel": "",
+						"axisPlacement": "auto",
+						"barAlignment": 0,
+						"drawStyle": "line",
+						"fillOpacity": 20,
+						"gradientMode": "none",
+						"hideFrom": { "legend": false, "tooltip": false, "viz": false },
+						"insertNulls": false,
+						"lineInterpolation": "stepAfter",
+						"lineWidth": 2,
+						"pointSize": 5,
+						"scaleDistribution": { "type": "linear" },
+						"showPoints": "never",
+						"spanNulls": false,
+						"stacking": { "group": "A", "mode": "normal" },
+						"thresholdsStyle": { "mode": "off" }
+					},
+					"mappings": [],
+					"min": 0,
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "short"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 8, "w": 8, "x": 8, "y": 14 },
+			"id": 14,
+			"options": {
+				"legend": {
+					"calcs": ["max"],
+					"displayMode": "table",
+					"placement": "bottom",
+					"showLegend": true
+				},
+				"tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+			},
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum by (http_request_method) (http_server_active_requests{job=\"monitoring-demo\"})",
+					"legendFormat": "{{http_request_method}}",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Active requests over time",
+			"type": "timeseries"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Application-defined failure counter and its rate of change.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "palette-classic" },
+					"custom": {
+						"axisBorderShow": false,
+						"axisCenteredZero": false,
+						"axisColorMode": "text",
+						"axisLabel": "",
+						"axisPlacement": "auto",
+						"barAlignment": 0,
+						"drawStyle": "line",
+						"fillOpacity": 12,
+						"gradientMode": "none",
+						"hideFrom": { "legend": false, "tooltip": false, "viz": false },
+						"insertNulls": false,
+						"lineInterpolation": "stepAfter",
+						"lineWidth": 2,
+						"pointSize": 5,
+						"scaleDistribution": { "type": "linear" },
+						"showPoints": "never",
+						"spanNulls": false,
+						"stacking": { "group": "A", "mode": "none" },
+						"thresholdsStyle": { "mode": "off" }
+					},
+					"mappings": [],
+					"min": 0,
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "short"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 8, "w": 8, "x": 16, "y": 14 },
+			"id": 15,
+			"options": {
+				"legend": {
+					"calcs": ["lastNotNull"],
+					"displayMode": "table",
+					"placement": "bottom",
+					"showLegend": true
+				},
+				"tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+			},
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum(demo_flaky_failures_total{job=\"monitoring-demo\"})",
+					"legendFormat": "total failures",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Intentional failure counter",
+			"type": "timeseries"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "95th percentile request and response body size for each route.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "palette-classic" },
+					"custom": {
+						"axisBorderShow": false,
+						"axisCenteredZero": false,
+						"axisColorMode": "text",
+						"axisLabel": "",
+						"axisPlacement": "auto",
+						"barAlignment": 0,
+						"drawStyle": "line",
+						"fillOpacity": 8,
+						"gradientMode": "none",
+						"hideFrom": { "legend": false, "tooltip": false, "viz": false },
+						"insertNulls": false,
+						"lineInterpolation": "linear",
+						"lineWidth": 2,
+						"pointSize": 5,
+						"scaleDistribution": { "type": "linear" },
+						"showPoints": "never",
+						"spanNulls": false,
+						"stacking": { "group": "A", "mode": "none" },
+						"thresholdsStyle": { "mode": "off" }
+					},
+					"mappings": [],
+					"min": 0,
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "bytes"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+			"id": 16,
+			"options": {
+				"legend": {
+					"calcs": ["lastNotNull"],
+					"displayMode": "table",
+					"placement": "bottom",
+					"showLegend": true
+				},
+				"tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+			},
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_request_body_size_bytes_bucket{job=\"monitoring-demo\"}[$__rate_interval])))",
+					"legendFormat": "{{http_route}} request p95",
+					"range": true,
+					"refId": "A"
+				},
+				{
+					"editorMode": "code",
+					"expr": "histogram_quantile(0.95, sum by (le, http_route) (rate(http_server_response_body_size_bytes_bucket{job=\"monitoring-demo\"}[$__rate_interval])))",
+					"legendFormat": "{{http_route}} response p95",
+					"range": true,
+					"refId": "B"
+				}
+			],
+			"title": "Body size by endpoint",
+			"type": "timeseries"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Response bytes sent per second, estimated from histogram count and sum series.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "palette-classic" },
+					"custom": {
+						"axisBorderShow": false,
+						"axisCenteredZero": false,
+						"axisColorMode": "text",
+						"axisLabel": "",
+						"axisPlacement": "auto",
+						"barAlignment": 0,
+						"drawStyle": "line",
+						"fillOpacity": 15,
+						"gradientMode": "none",
+						"hideFrom": { "legend": false, "tooltip": false, "viz": false },
+						"insertNulls": false,
+						"lineInterpolation": "linear",
+						"lineWidth": 2,
+						"pointSize": 5,
+						"scaleDistribution": { "type": "linear" },
+						"showPoints": "never",
+						"spanNulls": false,
+						"stacking": { "group": "A", "mode": "normal" },
+						"thresholdsStyle": { "mode": "off" }
+					},
+					"mappings": [],
+					"min": 0,
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "Bps"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 },
+			"id": 17,
+			"options": {
+				"legend": {
+					"calcs": ["mean", "max"],
+					"displayMode": "table",
+					"placement": "bottom",
+					"showLegend": true
+				},
+				"tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+			},
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "sum by (http_route) (rate(http_server_response_body_size_bytes_sum{job=\"monitoring-demo\"}[$__rate_interval]))",
+					"legendFormat": "{{http_route}}",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Response throughput",
+			"type": "timeseries"
+		},
+		{
+			"datasource": { "type": "prometheus", "uid": "prometheus" },
+			"description": "Distribution of request duration across all routes.",
+			"fieldConfig": {
+				"defaults": {
+					"custom": {
+						"hideFrom": { "legend": false, "tooltip": false, "viz": false },
+						"scaleDistribution": { "type": "linear" }
+					}
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 9, "w": 24, "x": 0, "y": 30 },
+			"id": 18,
+			"options": {
+				"calculate": false,
+				"cellGap": 1,
+				"color": {
+					"exponent": 0.5,
+					"fill": "dark-orange",
+					"mode": "scheme",
+					"reverse": false,
+					"scale": "exponential",
+					"scheme": "Oranges",
+					"steps": 64
+				},
+				"exemplars": { "color": "rgba(255,0,255,0.7)" },
+				"filterValues": { "le": 1e-9 },
+				"legend": { "show": true },
+				"rowsFrame": { "layout": "auto" },
+				"tooltip": { "show": true, "yHistogram": false },
+				"yAxis": { "axisPlacement": "left", "reverse": false, "unit": "s" }
+			},
+			"targets": [
+				{
+					"editorMode": "code",
+					"exemplar": true,
+					"expr": "sum by (le) (rate(http_server_request_duration_seconds_bucket{job=\"monitoring-demo\"}[$__rate_interval]))",
+					"format": "heatmap",
+					"instant": false,
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Request duration heatmap",
+			"type": "heatmap"
+		},
+		{
+			"collapsed": false,
+			"gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 },
+			"id": 20,
+			"panels": [],
+			"title": "Logs",
+			"type": "row"
+		},
+		{
+			"datasource": { "type": "loki", "uid": "loki" },
+			"description": "Log records per second, grouped by the OpenTelemetry severity field.",
+			"fieldConfig": {
+				"defaults": {
+					"color": { "mode": "palette-classic" },
+					"custom": {
+						"axisBorderShow": false,
+						"axisCenteredZero": false,
+						"axisColorMode": "text",
+						"axisLabel": "",
+						"axisPlacement": "auto",
+						"barAlignment": 0,
+						"drawStyle": "bars",
+						"fillOpacity": 40,
+						"gradientMode": "none",
+						"hideFrom": { "legend": false, "tooltip": false, "viz": false },
+						"insertNulls": false,
+						"lineInterpolation": "linear",
+						"lineWidth": 1,
+						"pointSize": 5,
+						"scaleDistribution": { "type": "linear" },
+						"showPoints": "never",
+						"spanNulls": false,
+						"stacking": { "group": "A", "mode": "normal" },
+						"thresholdsStyle": { "mode": "off" }
+					},
+					"mappings": [],
+					"min": 0,
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [{ "color": "green", "value": null }]
+					},
+					"unit": "ops"
+				},
+				"overrides": []
+			},
+			"gridPos": { "h": 8, "w": 8, "x": 0, "y": 40 },
+			"id": 21,
+			"options": {
+				"legend": {
+					"calcs": ["sum"],
+					"displayMode": "table",
+					"placement": "bottom",
+					"showLegend": true
+				},
+				"tooltip": { "hideZeros": false, "mode": "multi", "sort": "desc" }
+			},
+			"targets": [
+				{
+					"direction": "backward",
+					"editorMode": "code",
+					"expr": "sum by (severity_text) (rate({service_name=\"monitoring-demo\"}[$__auto]))",
+					"legendFormat": "{{severity_text}}",
+					"queryType": "range",
+					"refId": "A"
+				}
+			],
+			"title": "Log rate by severity",
+			"type": "timeseries"
+		},
+		{
+			"datasource": { "type": "loki", "uid": "loki" },
+			"description": "Application logs. Expand a row to see trace_id, span_id, severity, and handler fields.",
+			"gridPos": { "h": 12, "w": 16, "x": 8, "y": 40 },
+			"id": 22,
+			"options": {
+				"dedupStrategy": "none",
+				"enableInfiniteScrolling": false,
+				"enableLogDetails": true,
+				"prettifyLogMessage": false,
+				"showCommonLabels": false,
+				"showLabels": false,
+				"showTime": true,
+				"sortOrder": "Descending",
+				"wrapLogMessage": true
+			},
+			"targets": [
+				{
+					"direction": "backward",
+					"editorMode": "code",
+					"expr": "{service_name=\"monitoring-demo\"}",
+					"queryType": "range",
+					"refId": "A"
+				}
+			],
+			"title": "Application logs",
+			"type": "logs"
+		},
+		{
+			"collapsed": false,
+			"gridPos": { "h": 1, "w": 24, "x": 0, "y": 52 },
+			"id": 30,
+			"panels": [],
+			"title": "Traces",
+			"type": "row"
+		},
+		{
+			"datasource": { "type": "tempo", "uid": "tempo" },
+			"description": "Recent traces for the service. Select a trace ID to inspect its request and child spans.",
+			"fieldConfig": {
+				"defaults": {},
+				"overrides": [
+					{
+						"matcher": { "id": "byName", "options": "traceID" },
+						"properties": [{ "id": "custom.width", "value": 280 }]
+					},
+					{
+						"matcher": { "id": "byName", "options": "traceDuration" },
+						"properties": [{ "id": "unit", "value": "ms" }]
+					}
+				]
+			},
+			"gridPos": { "h": 12, "w": 24, "x": 0, "y": 53 },
+			"id": 31,
+			"options": {
+				"cellHeight": "sm",
+				"footer": {
+					"countRows": false,
+					"fields": "",
+					"reducer": ["sum"],
+					"show": false
+				},
+				"showHeader": true
+			},
+			"targets": [
+				{
+					"limit": 100,
+					"query": "{ resource.service.name = \"monitoring-demo\" }",
+					"queryType": "traceql",
+					"refId": "A",
+					"tableType": "traces"
+				}
+			],
+			"title": "Recent traces",
+			"transformations": [
+				{
+					"id": "organize",
+					"options": {
+						"excludeByName": { "nested": true, "traceService": true },
+						"indexByName": {
+							"startTime": 0,
+							"traceName": 1,
+							"traceDuration": 2,
+							"traceID": 3
+						},
+						"renameByName": {
+							"startTime": "Start time",
+							"traceDuration": "Duration",
+							"traceID": "Trace ID",
+							"traceName": "Request"
+						}
+					}
+				}
+			],
+			"type": "table"
+		}
+	],
+	"refresh": "5s",
+	"schemaVersion": 41,
+	"tags": ["demo", "opentelemetry", "rust"],
+	"templating": { "list": [] },
+	"time": { "from": "now-30m", "to": "now" },
+	"timepicker": {},
+	"timezone": "browser",
+	"title": "Monitoring demo",
+	"uid": "monitoring-demo",
+	"version": 1,
+	"weekStart": ""
+}

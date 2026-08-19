@@ -1,0 +1,20 @@
+# One container with the whole backend: OTel Collector, Prometheus, Loki, Tempo
+# and Grafana, already wired to each other. Intended for demos and local dev,
+# not production.
+services:
+  lgtm:
+    image: grafana/otel-lgtm:0.30.2
+    ports:
+      # Grafana. 3000 is taken by another project on this machine.
+      - "3001:3000"
+      # OTLP, gRPC and HTTP.
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      # Local demo; skip the login.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana/provisioning/dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/monitoring-demo.yaml:ro
+      - ./grafana/dashboards/monitoring-demo.json:/otel-lgtm/grafana-dashboard-monitoring-demo.json:ro
