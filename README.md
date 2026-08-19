@@ -17,7 +17,7 @@ You need Docker, Rust, and `curl`.
 
 ```sh
 docker compose up -d
-cargo run
+RUST_LIB_BACKTRACE=1 cargo run
 ```
 
 The complete service dashboard is available at
@@ -98,7 +98,9 @@ handler:
 
 The handlers add log events, a `work` span with `work.prepare`, `work.execute`,
 and `work.finalize` child spans, and application failure counters. A failed
-execution marks `work.execute` as an error, adds an exception event, and emits
+execution creates an `anyhow::Error`. The error captures a Rust backtrace
+because the run command enables `RUST_LIB_BACKTRACE`. The handler records that
+backtrace as `exception.stacktrace`, marks `work.execute` as an error, and emits
 a correlated ERROR log. `src/telemetry.rs` connects those signals to
 OpenTelemetry:
 
@@ -130,6 +132,11 @@ Compose provisions it automatically. It includes:
 - application logs grouped by severity, plus a dedicated error stream with
   readable messages and trace IDs;
 - failed and recent Tempo traces. Select one to inspect its spans.
+
+To read a failure backtrace, select a failed trace, select the red
+`work.execute` span, and open its exception event. Grafana shows the formatted
+Rust stack in the `exception.stacktrace` attribute. The first application frame
+points to the line that created the `anyhow::Error`.
 
 OpenTelemetry uses dotted metric names. Prometheus converts them to its naming
 format. For example, `demo.flaky.failures` becomes

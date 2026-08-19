@@ -1,10 +1,9 @@
 mod telemetry;
 
-use std::error::Error;
-use std::fmt;
 use std::sync::LazyLock;
 use std::time::Duration;
 
+use anyhow::{Result, anyhow};
 use axum::Router;
 use axum::extract::Query;
 use axum::http::StatusCode;
@@ -78,20 +77,9 @@ async fn slow(Query(params): Query<SlowParams>) -> Response {
     }
 }
 
-#[derive(Debug)]
-struct WorkError;
-
-impl fmt::Display for WorkError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str("simulated work execution failure")
-    }
-}
-
-impl Error for WorkError {}
-
 /// A nested set of spans that makes the trace waterfall useful to inspect.
 #[tracing::instrument]
-async fn work(ms: u64, fail: bool) -> Result<(), WorkError> {
+async fn work(ms: u64, fail: bool) -> Result<()> {
     let edge_ms = ms / 5;
     let execute_ms = ms - edge_ms * 2;
 
@@ -106,11 +94,17 @@ async fn prepare_work(ms: u64) {
     tokio::time::sleep(Duration::from_millis(ms)).await;
 }
 
-#[tracing::instrument(name = "work.execute", err)]
-async fn execute_work(ms: u64, fail: bool) -> Result<(), WorkError> {
+#[tracing::instrument(name = "work.execute")]
+async fn execute_work(ms: u64, fail: bool) -> Result<()> {
     tokio::time::sleep(Duration::from_millis(ms)).await;
     if fail {
-        return Err(WorkError);
+        let error = anyhow!("simulated work execution failure");
+        // This reporting could be centralized
+        tracing::error!(
+            error = %error,
+            exception.stacktrace = %error.backtrace(),
+        );
+        return Err(error);
     }
     Ok(())
 }

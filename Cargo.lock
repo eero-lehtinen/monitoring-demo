@@ -653,6 +653,7 @@ dependencies = [
 name = "monitoring-demo"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axum",
  "axum-otel-metrics",
  "axum-tracing-opentelemetry",
